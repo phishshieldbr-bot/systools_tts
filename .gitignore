@@ -1,0 +1,5 @@
+*.wav
+output_voice/
+vc_env310/
+*.pdf
+__pycache__/
