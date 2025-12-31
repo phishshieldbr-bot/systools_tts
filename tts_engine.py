@@ -122,3 +122,73 @@ def run_tts(text: str) -> str:
 
     merge_wavs(wav_files, final_wav)
     return final_wav
+
+
+
+# # if the character go above 220 sometime it split the word so i add a new logic
+# import re
+# # --------------------------------------------------
+# # ✂️ SMART CHUNKING (MEANING AWARE)
+# # --------------------------------------------------
+# def smart_split_text(text: str, max_chars: int = 220):
+#     text = normalize_text(text)
+
+#     # 1️⃣ split by sentence first
+#     sentences = re.split(r'(?<=[.!?])\s+', text)
+
+#     chunks = []
+#     current = ""
+
+#     # helper: split long sentence safely
+#     def split_long_sentence(sentence):
+#         results = []
+
+#         # 2️⃣ split by commas / pauses
+#         parts = re.split(r'(?<=[,;:])\s+', sentence)
+
+#         temp = ""
+#         for p in parts:
+#             if len(temp) + len(p) <= max_chars:
+#                 temp = temp + " " + p if temp else p
+#             else:
+#                 results.append(temp)
+#                 temp = p
+#         if temp:
+#             results.append(temp)
+
+#         # 3️⃣ split by words if still long
+#         final = []
+#         for r in results:
+#             if len(r) <= max_chars:
+#                 final.append(r)
+#             else:
+#                 words = r.split()
+#                 wtemp = ""
+#                 for w in words:
+#                     if len(wtemp) + len(w) <= max_chars:
+#                         wtemp = wtemp + " " + w if wtemp else w
+#                     else:
+#                         final.append(wtemp)
+#                         wtemp = w
+#                 if wtemp:
+#                     final.append(wtemp)
+
+#         return final
+
+#     # main loop
+#     for s in sentences:
+#         if len(s) > max_chars:
+#             for part in split_long_sentence(s):
+#                 chunks.append(part)
+#             continue
+
+#         if len(current) + len(s) <= max_chars:
+#             current = current + " " + s if current else s
+#         else:
+#             chunks.append(current)
+#             current = s
+
+#     if current:
+#         chunks.append(current)
+
+#     return chunks
