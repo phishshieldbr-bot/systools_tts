@@ -44,29 +44,48 @@ def normalize_text(text: str) -> str:
 # --------------------------------------------------
 # TEXT SPLITTING (XTTS SAFE)
 # --------------------------------------------------
+import re
+
 def split_text(text, max_chars=220):
     text = normalize_text(text)
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    # 1️⃣ Split using natural pause points
+    sentences = re.split(r'(?<=[.!?;,])\s+', text)
 
     chunks = []
     current = ""
 
     for s in sentences:
+        s = s.strip()
+        if not s:
+            continue
+
+        # 2️⃣ Handle very long sentence safely
         if len(s) > max_chars:
+            # Save whatever came before
+            if current:
+                chunks.append(current)
+                current = ""
+
+            # Split long sentence by characters (last fallback)
             for i in range(0, len(s), max_chars):
                 chunks.append(s[i:i + max_chars])
             continue
 
-        if len(current) + len(s) <= max_chars:
-            current = current + " " + s if current else s
+        # 3️⃣ Safe length check (counts space)
+        extra_space = 1 if current else 0
+        if len(current) + len(s) + extra_space <= max_chars:
+            current = f"{current} {s}".strip()
         else:
             chunks.append(current)
             current = s
 
+    # 4️⃣ Save leftover text
     if current:
         chunks.append(current)
 
     return chunks
+
 
 # --------------------------------------------------
 # MERGE WAV FILES
@@ -124,71 +143,3 @@ def run_tts(text: str) -> str:
     return final_wav
 
 
-
-# # if the character go above 220 sometime it split the word so i add a new logic
-# import re
-# # --------------------------------------------------
-# # ✂️ SMART CHUNKING (MEANING AWARE)
-# # --------------------------------------------------
-# def smart_split_text(text: str, max_chars: int = 220):
-#     text = normalize_text(text)
-
-#     # 1️⃣ split by sentence first
-#     sentences = re.split(r'(?<=[.!?])\s+', text)
-
-#     chunks = []
-#     current = ""
-
-#     # helper: split long sentence safely
-#     def split_long_sentence(sentence):
-#         results = []
-
-#         # 2️⃣ split by commas / pauses
-#         parts = re.split(r'(?<=[,;:])\s+', sentence)
-
-#         temp = ""
-#         for p in parts:
-#             if len(temp) + len(p) <= max_chars:
-#                 temp = temp + " " + p if temp else p
-#             else:
-#                 results.append(temp)
-#                 temp = p
-#         if temp:
-#             results.append(temp)
-
-#         # 3️⃣ split by words if still long
-#         final = []
-#         for r in results:
-#             if len(r) <= max_chars:
-#                 final.append(r)
-#             else:
-#                 words = r.split()
-#                 wtemp = ""
-#                 for w in words:
-#                     if len(wtemp) + len(w) <= max_chars:
-#                         wtemp = wtemp + " " + w if wtemp else w
-#                     else:
-#                         final.append(wtemp)
-#                         wtemp = w
-#                 if wtemp:
-#                     final.append(wtemp)
-
-#         return final
-
-#     # main loop
-#     for s in sentences:
-#         if len(s) > max_chars:
-#             for part in split_long_sentence(s):
-#                 chunks.append(part)
-#             continue
-
-#         if len(current) + len(s) <= max_chars:
-#             current = current + " " + s if current else s
-#         else:
-#             chunks.append(current)
-#             current = s
-
-#     if current:
-#         chunks.append(current)
-
-#     return chunks
