@@ -109,6 +109,18 @@ with torch.serialization.safe_globals(SAFE_GLOBALS):
         model_name="tts_models/multilingual/multi-dataset/xtts_v2",
         gpu=torch.cuda.is_available()
     )
+def wav_to_mp3(wav_path: str) -> str:
+    mp3_path = wav_path.replace(".wav", ".mp3")
+    AudioSegment.from_wav(wav_path).export(mp3_path, format="mp3")
+    return mp3_path
+
+
+def cleanup_files(files):
+    for f in files:
+        try:
+            os.remove(f)
+        except Exception:
+            pass
 
 # --------------------------------------------------
 # MAIN FUNCTION (CALLED BY FASTAPI)

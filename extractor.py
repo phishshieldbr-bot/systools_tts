@@ -29,6 +29,7 @@ def extract_from_html(html: str):
                 if line.strip()
             ]
             body = " ".join(text_lines)
+            print(body)
 
         # 🧱 3️⃣ Final fallback to <body>
         elif soup.body:
@@ -38,5 +39,7 @@ def extract_from_html(html: str):
                 if line.strip()
             ]
             body = " ".join(text_lines)
+            print(body)
 
     return title, body
+

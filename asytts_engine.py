@@ -78,6 +78,8 @@ with torch.serialization.safe_globals(SAFE_GLOBALS):
 def load_wav(path):
     return AudioSegment.from_wav(path)
 
+
+
 # ---------------- MAIN FUNCTION ----------------
 def run_tts(text: str) -> str:
     # CPU work (safe)
