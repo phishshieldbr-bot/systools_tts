@@ -127,3 +127,4 @@ def run_tts(text: str) -> str:
 
     merge_wavs(wav_files, final_wav)
     return final_wav
+

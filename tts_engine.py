@@ -22,6 +22,8 @@ SAFE_GLOBALS = [
 # TEXT NORMALIZATION
 # --------------------------------------------------
 
+import re
+
 def normalize_text(text: str) -> str:
     # Replace dangerous unicode symbols
     text = text.replace("•", ". ")
@@ -29,14 +31,17 @@ def normalize_text(text: str) -> str:
     text = text.replace("“", '"').replace("”", '"')
     text = text.replace("–", "-").replace("—", "-")
 
-    # Remove any remaining non-ascii characters
+    # Remove non-ASCII characters
     text = text.encode("ascii", "ignore").decode()
 
-    # Fix spacing after punctuation
-    text = re.sub(r'([.!?])([A-Za-z])', r'\1 \2', text)
+    # Ensure space after punctuation if missing
+    text = re.sub(r'([.!?])([A-Z])', r'\1 \2', text)
 
-    # Collapse whitespace
-    text = " ".join(text.split())
+    # Split into sentences using punctuation and whitespace
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    # Strip and join sentences with newlines for readability
+    text = "\n".join(s.strip() for s in sentences if s.strip())
 
     return text
 
@@ -44,7 +49,7 @@ def normalize_text(text: str) -> str:
 # --------------------------------------------------
 # TEXT SPLITTING (XTTS SAFE)
 # --------------------------------------------------
-def split_text(text, max_chars=220):
+# def split_text(text, max_chars=220):
     text = normalize_text(text)
     sentences = re.split(r'(?<=[.!?])\s+', text)
 
@@ -102,7 +107,7 @@ with torch.serialization.safe_globals(SAFE_GLOBALS):
 # MAIN FUNCTION (CALLED BY FASTAPI)
 # --------------------------------------------------
 def run_tts(text: str) -> str:
-    chunks = split_text(text)
+    chunks = smart_split_text(text)
     wav_files = []
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -129,66 +134,71 @@ def run_tts(text: str) -> str:
 # import re
 # # --------------------------------------------------
 # # ✂️ SMART CHUNKING (MEANING AWARE)
-# # --------------------------------------------------
-# def smart_split_text(text: str, max_chars: int = 220):
-#     text = normalize_text(text)
+# --------------------------------------------------
+def smart_split_text(text: str, max_chars: int = 220):
+    text = normalize_text(text)
 
-#     # 1️⃣ split by sentence first
-#     sentences = re.split(r'(?<=[.!?])\s+', text)
+    # 1️⃣ split by sentence first
+    sentences = re.split(r'(?<=[.!?])\s+', text)
 
-#     chunks = []
-#     current = ""
+    chunks = []
+    current = ""
 
-#     # helper: split long sentence safely
-#     def split_long_sentence(sentence):
-#         results = []
+    # helper: split long sentence safely
+    def split_long_sentence(sentence):
+        results = []
 
-#         # 2️⃣ split by commas / pauses
-#         parts = re.split(r'(?<=[,;:])\s+', sentence)
+        # 2️⃣ split by commas / pauses
+        parts = re.split(r'(?<=[,;:])\s+', sentence)
 
-#         temp = ""
-#         for p in parts:
-#             if len(temp) + len(p) <= max_chars:
-#                 temp = temp + " " + p if temp else p
-#             else:
-#                 results.append(temp)
-#                 temp = p
-#         if temp:
-#             results.append(temp)
+        temp = ""
+        for p in parts:
+            if len(temp) + len(p) <= max_chars:
+                temp = temp + " " + p if temp else p
+            else:
+                results.append(temp)
+                temp = p
+        if temp:
+            results.append(temp)
 
-#         # 3️⃣ split by words if still long
-#         final = []
-#         for r in results:
-#             if len(r) <= max_chars:
-#                 final.append(r)
-#             else:
-#                 words = r.split()
-#                 wtemp = ""
-#                 for w in words:
-#                     if len(wtemp) + len(w) <= max_chars:
-#                         wtemp = wtemp + " " + w if wtemp else w
-#                     else:
-#                         final.append(wtemp)
-#                         wtemp = w
-#                 if wtemp:
-#                     final.append(wtemp)
+        # 3️⃣ split by words if still long
+        final = []
+        for r in results:
+            if len(r) <= max_chars:
+                final.append(r)
+            else:
+                words = r.split()
+                wtemp = ""
+                for w in words:
+                    if len(wtemp) + len(w) <= max_chars:
+                        wtemp = wtemp + " " + w if wtemp else w
+                    else:
+                        final.append(wtemp)
+                        wtemp = w
+                if wtemp:
+                    final.append(wtemp)
 
-#         return final
+        return final
 
-#     # main loop
-#     for s in sentences:
-#         if len(s) > max_chars:
-#             for part in split_long_sentence(s):
-#                 chunks.append(part)
-#             continue
+    # main loop
+    for s in sentences:
+        if len(s) > max_chars:
+            for part in split_long_sentence(s):
+                chunks.append(part)
+            continue
 
-#         if len(current) + len(s) <= max_chars:
-#             current = current + " " + s if current else s
-#         else:
-#             chunks.append(current)
-#             current = s
+        if len(current) + len(s) <= max_chars:
+            current = current + " " + s if current else s
+        else:
+            chunks.append(current)
+            current = s
 
-#     if current:
-#         chunks.append(current)
+    if current:
+        chunks.append(current)
 
-#     return chunks
+    return chunks
+
+
+text=input("entre the text :")
+answer=normalize_text(text)
+print(answer)
