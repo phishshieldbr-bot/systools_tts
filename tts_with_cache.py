@@ -2,7 +2,10 @@ import torch
 import os
 import re
 import hashlib
+<<<<<<< HEAD
 from datetime import datetime
+=======
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
 from pydub import AudioSegment
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
@@ -32,6 +35,7 @@ def normalize_text(text: str) -> str:
     return " ".join(text.split())
 
 # --------------------------------------------------
+<<<<<<< HEAD
 # TEXT SPLITTING
 # --------------------------------------------------
 def split_text(text, max_chars=220):
@@ -41,6 +45,21 @@ def split_text(text, max_chars=220):
     chunks, current = [], ""
 
     for s in sentences:
+=======
+# TEXT SPLITTING (XTTS SAFE)
+# --------------------------------------------------
+def split_text(text, max_chars=220):
+    sentences = re.split(r'(?<=[.!?;,])\s+', text)
+
+    chunks = []
+    current = ""
+
+    for s in sentences:
+        s = s.strip()
+        if not s:
+            continue
+
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
         if len(s) > max_chars:
             if current:
                 chunks.append(current)
@@ -61,6 +80,7 @@ def split_text(text, max_chars=220):
     return chunks
 
 # --------------------------------------------------
+<<<<<<< HEAD
 # HASH (TEXT ONLY)
 # --------------------------------------------------
 def text_hash(text: str) -> str:
@@ -68,6 +88,18 @@ def text_hash(text: str) -> str:
 
 # --------------------------------------------------
 # MERGE WAVS
+=======
+# HASH FUNCTIONS
+# --------------------------------------------------
+def full_text_hash(text: str) -> str:
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
+
+def chunk_hash(text: str) -> str:
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
+
+# --------------------------------------------------
+# MERGE WAV FILES
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
 # --------------------------------------------------
 def merge_wavs(wav_files, output_file, pause_ms=300):
     final = AudioSegment.empty()
@@ -83,7 +115,13 @@ def merge_wavs(wav_files, output_file, pause_ms=300):
 # --------------------------------------------------
 BASE_OUTPUT_DIR = "output_voice"
 CHUNKS_DIR = os.path.join(BASE_OUTPUT_DIR, "chunks")
+<<<<<<< HEAD
 os.makedirs(CHUNKS_DIR, exist_ok=True)
+=======
+
+os.makedirs(CHUNKS_DIR, exist_ok=True)
+os.makedirs(BASE_OUTPUT_DIR, exist_ok=True)
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
 
 SPEAKER_WAV = "/home/systools/Documents/voice_cloning/male.wav"
 
@@ -97,6 +135,7 @@ with torch.serialization.safe_globals(SAFE_GLOBALS):
     )
 
 # --------------------------------------------------
+<<<<<<< HEAD
 # MAIN FUNCTION
 # --------------------------------------------------
 def run_tts(text: str) -> str:
@@ -114,6 +153,34 @@ def run_tts(text: str) -> str:
         # ✅ TEXT-ONLY CACHE
         if not os.path.exists(chunk_path):
             print("🎙 Generating:", chunk[:40])
+=======
+# MAIN TTS FUNCTION
+# --------------------------------------------------
+def run_tts(text: str) -> str:
+    text = normalize_text(text)
+
+    # 1️⃣ FULL TEXT → FINAL AUDIO CACHE
+    final_id = full_text_hash(text)
+    final_wav = os.path.join(BASE_OUTPUT_DIR, f"final_{final_id}.wav")
+
+    # ✅ FULL AUDIO EXISTS → RETURN
+    if os.path.exists(final_wav):
+        print("⚡ Using cached FINAL audio")
+        return final_wav
+
+    # 2️⃣ FINAL NOT FOUND → BUILD USING CHUNKS
+    chunks = split_text(text)
+    wav_files = []
+
+    for chunk in chunks:
+        chunk = chunk.strip()
+        cid = chunk_hash(chunk)
+        chunk_path = os.path.join(CHUNKS_DIR, f"{cid}.wav")
+
+        # ✅ CHUNK CACHE
+        if not os.path.exists(chunk_path):
+            print("🎙 Generating chunk:", chunk[:40])
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
             tts.tts_to_file(
                 text=chunk,
                 speaker_wav=SPEAKER_WAV,
@@ -121,6 +188,7 @@ def run_tts(text: str) -> str:
                 file_path=chunk_path
             )
         else:
+<<<<<<< HEAD
             print("⚡ Using cache:", chunk[:40])
 
         wav_files.append(chunk_path)
@@ -128,3 +196,12 @@ def run_tts(text: str) -> str:
     merge_wavs(wav_files, final_wav)
     return final_wav
 
+=======
+            print("⚡ Reusing chunk:", chunk[:40])
+
+        wav_files.append(chunk_path)
+
+    # 3️⃣ MERGE ONCE AND SAVE FINAL
+    merge_wavs(wav_files, final_wav)
+    return final_wav
+>>>>>>> 92849796ee75f9b1aa1535b3fcf5228831541941
